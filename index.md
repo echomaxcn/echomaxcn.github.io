@@ -6,11 +6,10 @@
     <body><h3>
         Hello, welcome to Echomax World!    </h3>
     </body>
-    <h3>My Favorite</h3>
+    <img style="width:100vw" src="star.jpg" alt="Beautiful">
+    <h4>My Favorite</h2>
     <ul>
-      
         <li>Stock Market</li>
         <li>Option Market</li>
-        <img src="star.jpg" alt="Beautiful">
-    </ul>
+     </ul>
 </html>
