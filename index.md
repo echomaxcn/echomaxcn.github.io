@@ -11,5 +11,6 @@
       
         <li>Stock Market</li>
         <li>Option Market</li>
+        <img src="star.jpg" alt="Beautiful">
     </ul>
 </html>
