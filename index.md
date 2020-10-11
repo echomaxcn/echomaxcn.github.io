@@ -8,7 +8,7 @@
     </body>
     <h3>My Favorite</h3>
     <ul>
-        <li>Table Tennis</li>
+      
         <li>Stock Market</li>
         <li>Option Market</li>
     </ul>
