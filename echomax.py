@@ -1,5 +1,6 @@
 
-'''一个简单的获取股票历史数据,进行回测,并找出两条均线最佳日期参数的小程序'''
+'''一个简单的获取股票历史数据,进行回测,并找出两条均线最佳日期参数的小程序  
+    by:反手一拍 '''
 
 import pandas as pd
 import numpy as np
@@ -78,23 +79,19 @@ class Echomax(): # 定义类
         market_vol = df['Market_return'].std() * np.sqrt(252) 
         stra_vol = df['Strategy_return'].std() * np.sqrt(252) 
         sharp_ratio = None if df['Strategy_return'].std() == 0 else round(np.sqrt(252) * df['Strategy_return'].mean() / df['Strategy_return'].std(),2)
-        # print(df.tail(3))
-        # print(np.any(df.isnull()))
-        # exit()
-        
-        self.recent_info_list = [m1, m2, btd, tl, market_vol, stra_return, anual_mar_rtn, anual_str_rtn, market_vol, stra_vol, sharp_ratio]
-        self.recent_df = df
-        return [stra_return, anual_str_rtn, market_return,  anual_mar_rtn, stra_vol, market_vol, sharp_ratio, df['dd2max%'].min(), df['up2max%'].max()]    
-    
-    def show_result(self): #显示结果
-        
-        df = self.recent_df   
-        m1, m2, btd, tl, market_vol, stra_return, anual_mar_rtn, anual_str_rtn, market_vol, stra_vol, sharp_ratio = self.recent_info_list
-        
         try:
             no_stock_days = df['Signal'].value_counts()[0]
         except KeyError:
             no_stock_days = 0
+        
+        self.recent_info_list = [m1, m2, btd, tl, market_vol, stra_return, anual_mar_rtn, anual_str_rtn, market_vol, stra_vol, sharp_ratio, no_stock_days]
+        self.recent_df = df
+        return [stra_return,  market_return, anual_str_rtn, anual_mar_rtn, stra_vol, market_vol, sharp_ratio, df['dd2max%'].min(), df['up2max%'].max(), no_stock_days]    
+    
+    def show_result(self): #显示结果
+        
+        df = self.recent_df   
+        m1, m2, btd, tl, market_vol, stra_return, anual_mar_rtn, anual_str_rtn, market_vol, stra_vol, sharp_ratio, no_stock_days = self.recent_info_list
         
         start_dd = df[df.index < df[df['dd2max%'] == df['dd2max%'].min()].index[0]].sort_values(by='Close',ascending=False).index[0]
         max_draw_date = '最大回撤开始: %s  最大回撤到达日：%s'%(start_dd, df[df['dd2max%'] == df['dd2max%'].min()].index[0])
@@ -114,23 +111,23 @@ class Echomax(): # 定义类
         print(72*'-', stock_code, start_end_date, mean_bias_info, long_short_days, mar_rtn_info, str_rtn_info, annual_info, mar_str_vol, sep='\n')
         print('最大回撤: %.2f%%   持续天数：''%s '%(df['dd2max%'].min()*100, draw_last_days), max_draw_date, sep='\n')
         print('最大升幅: %.2f%%   持续天数：%s'%(df['up2max%'].max()*100, rise_last_days), max_rise_date, 72*'-', sep='\n')
+        
         out_info_list = [stock_code, start_end_date, mean_bias_info, long_short_days, mar_rtn_info, str_rtn_info, annual_info, mar_str_vol]
         df = pd.concat([df, pd.Series(out_info_list)],axis=0)
         self.final_df = df
         df[['Total_market','Total_strategy']].plot(grid=True, figsize=(10,6))
         plt.title('Code:%s   Strategy--->%d: %ddays:  Spread ratio:%0.03f   Back test days:%i'%(self.stock_code,m1,m2,tl,btd),fontsize=12)
         plt.ylabel('Total Return')
+        plt.show()
         # csv_path = self.save_path +'%s_%d_%d_%.2f%%_%i.csv'%(self.stock_code, m1, m2, tl*100,btd)
         # df.to_csv(csv_path, encoding='gbk')
-        # plt.savefig(self.save_path+'%s_%d_%d_%.2f%%_%i.png'%(self.stock_code, m1, m2, tl*100, btd))
-        plt.show()
         return
 
     def get_best_para(self): #循环计算不同均线日期的收益率及各参数
                
         print('\n%s 开始回测!            回测天数： %s'%(self.stock_code, self.btd_list))
         print('均线触发价差（比例%%）：%s\n'% self.ratio)
-        columns=['周期', '组合', '策略收益','策略年化', '市场收益','市场年化','策略波动率','市场波动率','夏普比率','最大回撤','最大升幅']
+        columns=['回测天数', '均线/价差', '策略收益', '市场收益','策略年化','市场年化','策略波动率','市场波动率','夏普比率','最大回撤','最大升幅','空仓天数']
         save_file_name = self.save_path + self.stock_code + '_best_para_report.xls'
         writer = pd.ExcelWriter(save_file_name,encoding='gbk')
         all_report = pd.DataFrame()
@@ -144,18 +141,18 @@ class Echomax(): # 定义类
 
             best_para_report = pd.DataFrame(temp,columns=columns)
             best_para_report.sort_values('策略收益', ascending=False, inplace=True)
-            best_para_report.to_excel(writer,index=False,sheet_name=str(k))
+            best_para_report[:100].to_excel(writer,index=False,sheet_name=str(k))
             all_report = pd.concat([all_report, best_para_report[:10]])        
         all_report.sort_values('策略年化',ascending=False).to_excel(writer, index=False, sheet_name='All report')
         writer.close()
         print(all_report.sort_values('策略年化',ascending=False).head())
         print('\nAnalysis done! Check file!')
-        
-my_stock = Echomax('000001.SZ')
+   
+my_stock = Echomax('168103.SZ')
 # print(my_stock.basic_df.head())
-my_stock.ma_rtn_cal(3,6,120,-0.015)
+# my_stock.ma_rtn_cal(3,6,120,-0.015)
 # print(my_stock.recent_df.tail())
-my_stock.show_result()
-my_stock.final_df.to_csv('final.csv',encoding='gbk')
-print(my_stock.final_df[0].tail(8))
-# my_stock.get_best_para()
+# my_stock.show_result()
+# print(my_stock.final_df[0].tail(8))
+# my_stock.final_df.to_csv('final.csv',encoding='gbk')
+my_stock.get_best_para()
